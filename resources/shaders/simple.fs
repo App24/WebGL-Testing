@@ -10,7 +10,7 @@ void main(){
     vec3 ambientColor = vec3(0.1);
 
     vec3 norm = normalize(normal);
-    vec3 lightDir = normalize(vec3(-.2, 1,1));
+    vec3 lightDir = normalize(vec3(-.2, 1,.2));
 
     float diff = max(dot(norm, lightDir), 0.0);
 

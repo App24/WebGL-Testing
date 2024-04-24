@@ -246,371 +246,7 @@ var BufferObject = /** @class */function () {
   return BufferObject;
 }();
 exports.BufferObject = BufferObject;
-},{".":"index.ts"}],"OBJLoader/Face.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-var MinimumDataLength = 4;
-var Prefix = "f";
-var Face = /** @class */function () {
-  function Face() {}
-  Face.prototype.loadFromStringArray = function (data) {
-    if (data.length < MinimumDataLength) throw new Error("Input array must be of minimum length " + MinimumDataLength);
-    if (data[0].toLowerCase() !== Prefix) throw new Error("Data prefix must be '" + Prefix + "'");
-    var vcount = data.length - 1;
-    this.VertexIndexList = [];
-    this.TextureVertexIndexList = [];
-    this.NormalVertexIndexList = [];
-    var success = false;
-    for (var i = 0; i < vcount; i++) {
-      var parts = data[i + 1].split('/');
-      var vindex = Number(parts[0]);
-      success = !isNaN(vindex);
-      if (!success) throw new Error("Could not parse parameter as int");
-      this.VertexIndexList.push(vindex);
-      var temp = 0;
-      if (parts.length >= 2) {
-        vindex = Number(parts[1]);
-        success = !isNaN(vindex);
-        if (success) {
-          temp = vindex;
-        }
-      }
-      this.TextureVertexIndexList.push(temp);
-      temp = 0;
-      if (parts.length >= 3) {
-        vindex = Number(parts[2]);
-        success = !isNaN(vindex);
-        if (success) {
-          temp = vindex;
-        }
-      }
-      this.NormalVertexIndexList.push(temp);
-    }
-  };
-  return Face;
-}();
-exports.Face = Face;
-},{}],"OBJLoader/Normal.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-var MinimumDataLength = 4;
-var Prefix = "vn";
-var Normal = /** @class */function () {
-  function Normal() {}
-  Normal.prototype.loadFromStringArray = function (data) {
-    if (data.length < MinimumDataLength) throw new Error("Input array must be of minimum length " + MinimumDataLength);
-    if (data[0].toLowerCase() !== Prefix) throw new Error("Data prefix must be '" + Prefix + "'");
-    var success = false;
-    var x = 0;
-    var y = 0;
-    var z = 0;
-    x = Number(data[1]);
-    success = !isNaN(x);
-    if (!success) throw new Error("Could not parse X parameter as double");
-    y = Number(data[2]);
-    success = !isNaN(y);
-    if (!success) throw new Error("Could not parse Y parameter as double");
-    z = Number(data[3]);
-    success = !isNaN(z);
-    if (!success) throw new Error("Could not parse Z parameter as double");
-    this.x = x;
-    this.y = y;
-    this.z = z;
-  };
-  return Normal;
-}();
-exports.Normal = Normal;
-},{}],"OBJLoader/TextureVertex.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-var MinimumDataLength = 3;
-var Prefix = "vt";
-var TextureVertex = /** @class */function () {
-  function TextureVertex() {}
-  TextureVertex.prototype.loadFromStringArray = function (data) {
-    if (data.length < MinimumDataLength) throw new Error("Input array must be of minimum length " + MinimumDataLength);
-    if (data[0].toLowerCase() !== Prefix) throw new Error("Data prefix must be '" + Prefix + "'");
-    var success = false;
-    var x = 0;
-    var y = 0;
-    x = Number(data[1]);
-    success = !isNaN(x);
-    if (!success) throw new Error("Could not parse X parameter as double");
-    y = Number(data[2]);
-    success = !isNaN(y);
-    if (!success) throw new Error("Could not parse Y parameter as double");
-    this.x = x;
-    this.y = y;
-  };
-  return TextureVertex;
-}();
-exports.TextureVertex = TextureVertex;
-},{}],"OBJLoader/Vertex.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-var MinimumDataLength = 4;
-var Prefix = "v";
-var Vertex = /** @class */function () {
-  function Vertex() {}
-  Vertex.prototype.loadFromStringArray = function (data) {
-    if (data.length < MinimumDataLength) throw new Error("Input array must be of minimum length " + MinimumDataLength);
-    if (data[0].toLowerCase() !== Prefix) throw new Error("Data prefix must be '" + Prefix + "'");
-    var success = false;
-    var x = 0;
-    var y = 0;
-    var z = 0;
-    x = Number(data[1]);
-    success = !isNaN(x);
-    if (!success) throw new Error("Could not parse X parameter as double");
-    y = Number(data[2]);
-    success = !isNaN(y);
-    if (!success) throw new Error("Could not parse Y parameter as double");
-    z = Number(data[3]);
-    success = !isNaN(z);
-    if (!success) throw new Error("Could not parse Z parameter as double");
-    this.x = x;
-    this.y = y;
-    this.z = z;
-  };
-  return Vertex;
-}();
-exports.Vertex = Vertex;
-},{}],"OBJLoader/Obj.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-var Utilities_1 = require("../Utilities");
-var Face_1 = require("./Face");
-var Normal_1 = require("./Normal");
-var TextureVertex_1 = require("./TextureVertex");
-var Vertex_1 = require("./Vertex");
-var FaceData = /** @class */function () {
-  function FaceData() {}
-  return FaceData;
-}();
-var Obj = /** @class */function () {
-  function Obj() {
-    this.vertexList = [];
-    this.faceList = [];
-    this.textureList = [];
-    this.normalList = [];
-  }
-  Obj.prototype.loadObjFile = function (path) {
-    var file = Utilities_1.loadFile(path);
-    this.loadObj(file.split("\n"));
-  };
-  Obj.prototype.loadObj = function (data) {
-    var _this = this;
-    data.forEach(function (line) {
-      _this.processLine(line);
-    });
-    {
-      var indices = this.facesToVertexIndices();
-      var newArray_1 = [];
-      indices.forEach(function (i) {
-        newArray_1.push(_this.vertexList[i]);
-      });
-      this.vertexList = newArray_1;
-    }
-    {
-      var indices = this.facesToNormalIndices();
-      var newArray_2 = [];
-      indices.forEach(function (i) {
-        newArray_2.push(_this.normalList[i]);
-      });
-      this.normalList = newArray_2;
-    }
-    {
-      var indices = this.facesToTextureIndices();
-      var newArray_3 = [];
-      indices.forEach(function (i) {
-        newArray_3.push(_this.textureList[i]);
-      });
-      this.textureList = newArray_3;
-    }
-    this.indices = [];
-    this.vertices = [];
-    this.normals = [];
-    this.uvs = [];
-    var temp = [];
-    var _loop_1 = function _loop_1(i) {
-      var vertice = {
-        x: this_1.vertexList[i].x,
-        y: this_1.vertexList[i].y,
-        z: this_1.vertexList[i].z
-      };
-      var uv = {
-        x: this_1.textureList[i].x,
-        y: this_1.textureList[i].y
-      };
-      var normal = {
-        x: this_1.normalList[i].x,
-        y: this_1.normalList[i].y,
-        z: this_1.normalList[i].z
-      };
-      var data_1 = {
-        v: vertice,
-        u: uv,
-        n: normal
-      };
-      var index = temp.findIndex(function (d) {
-        return d === data_1;
-      });
-      if (index < 0) {
-        this_1.indices.push(temp.length);
-        temp.push(data_1);
-        this_1.vertices.push(vertice.x, vertice.y, vertice.z);
-        this_1.normals.push(normal.x, normal.y, normal.z);
-        this_1.uvs.push(uv.x, uv.y);
-      } else {
-        this_1.indices.push(index);
-      }
-    };
-    var this_1 = this;
-    for (var i = 0; i < this.vertexList.length; i++) {
-      _loop_1(i);
-    }
-    /*faces.forEach(face=>{
-        this.vertexList.push(face.vertexA);
-        this.vertexList.push(face.vertexB);
-        this.vertexList.push(face.vertexC);
-    });*/
-  };
-  Obj.prototype.processLine = function (line) {
-    var parts = line.split(' ').filter(function (c) {
-      return c !== '';
-    });
-    if (parts.length > 0) {
-      switch (parts[0]) {
-        case "usemtl":
-          this.useMtl = parts[1];
-          break;
-        case "mtllib":
-          this.mtl = parts[1];
-          break;
-        case "v":
-          var v = new Vertex_1.Vertex();
-          v.loadFromStringArray(parts);
-          this.vertexList.push(v);
-          v.Index = this.vertexList.length;
-          break;
-        case "vn":
-          var n = new Normal_1.Normal();
-          n.loadFromStringArray(parts);
-          this.normalList.push(n);
-          n.Index = this.normalList.length;
-          break;
-        case "f":
-          var f = new Face_1.Face();
-          f.loadFromStringArray(parts);
-          f.UseMtl = this.useMtl;
-          this.faceList.push(f);
-          break;
-        case "vt":
-          var vt = new TextureVertex_1.TextureVertex();
-          vt.loadFromStringArray(parts);
-          this.textureList.push(vt);
-          vt.Index = this.textureList.length;
-          break;
-      }
-    }
-  };
-  Obj.prototype.facesToVertexIndices = function () {
-    var indices = [];
-    for (var i = 0; i < this.faceList.length; i++) {
-      var face = this.faceList[i];
-      if (face.VertexIndexList.length == 4) {
-        indices.push(face.VertexIndexList[0] - 1);
-        indices.push(face.VertexIndexList[1] - 1);
-        indices.push(face.VertexIndexList[2] - 1);
-        indices.push(face.VertexIndexList[0] - 1);
-        indices.push(face.VertexIndexList[2] - 1);
-        indices.push(face.VertexIndexList[3] - 1);
-      } else {
-        face.VertexIndexList.forEach(function (v) {
-          indices.push(v - 1);
-        });
-      }
-    }
-    return indices;
-  };
-  Obj.prototype.facesToNormalIndices = function () {
-    var indices = [];
-    for (var i = 0; i < this.faceList.length; i++) {
-      var face = this.faceList[i];
-      if (face.NormalVertexIndexList.length == 4) {
-        indices.push(face.NormalVertexIndexList[0] - 1);
-        indices.push(face.NormalVertexIndexList[1] - 1);
-        indices.push(face.NormalVertexIndexList[2] - 1);
-        indices.push(face.NormalVertexIndexList[0] - 1);
-        indices.push(face.NormalVertexIndexList[2] - 1);
-        indices.push(face.NormalVertexIndexList[3] - 1);
-      } else {
-        face.NormalVertexIndexList.forEach(function (v) {
-          indices.push(v - 1);
-        });
-      }
-    }
-    return indices;
-  };
-  Obj.prototype.facesToTextureIndices = function () {
-    var indices = [];
-    for (var i = 0; i < this.faceList.length; i++) {
-      var face = this.faceList[i];
-      if (face.TextureVertexIndexList.length == 4) {
-        indices.push(face.TextureVertexIndexList[0] - 1);
-        indices.push(face.TextureVertexIndexList[1] - 1);
-        indices.push(face.TextureVertexIndexList[2] - 1);
-        indices.push(face.TextureVertexIndexList[0] - 1);
-        indices.push(face.TextureVertexIndexList[2] - 1);
-        indices.push(face.TextureVertexIndexList[3] - 1);
-      } else {
-        face.TextureVertexIndexList.forEach(function (v) {
-          indices.push(v - 1);
-        });
-      }
-    }
-    return indices;
-  };
-  Obj.prototype.vertexListToVertices = function () {
-    var vertices = [];
-    this.vertexList.forEach(function (v) {
-      return vertices.push(v.x, v.y, v.z);
-    });
-    return vertices;
-  };
-  Obj.prototype.vertexTexturesListToUvs = function () {
-    var vertices = [];
-    this.textureList.forEach(function (v) {
-      return vertices.push(v.x, v.y);
-    });
-    return vertices;
-  };
-  Obj.prototype.vertexNormalsToNormals = function () {
-    var vertices = [];
-    this.normalList.forEach(function (v) {
-      return vertices.push(v.x, v.y, v.z);
-    });
-    return vertices;
-  };
-  return Obj;
-}();
-exports.Obj = Obj;
-},{"../Utilities":"Utilities.ts","./Face":"OBJLoader/Face.ts","./Normal":"OBJLoader/Normal.ts","./TextureVertex":"OBJLoader/TextureVertex.ts","./Vertex":"OBJLoader/Vertex.ts"}],"../node_modules/gl-matrix/esm/common.js":[function(require,module,exports) {
+},{".":"index.ts"}],"../node_modules/gl-matrix/esm/common.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -8250,7 +7886,7 @@ var MathUtilities_1 = require("./MathUtilities");
 var Texture = /** @class */function () {
   function Texture(imageUrl, flipTexture) {
     if (flipTexture === void 0) {
-      flipTexture = true;
+      flipTexture = false;
     }
     var _this = this;
     this.texture = _1.gl.createTexture();
@@ -8291,7 +7927,171 @@ var Texture = /** @class */function () {
   return Texture;
 }();
 exports.Texture = Texture;
-},{".":"index.ts","./MathUtilities":"MathUtilities.ts"}],"index.ts":[function(require,module,exports) {
+},{".":"index.ts","./MathUtilities":"MathUtilities.ts"}],"OBJLoader/Vertex.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var gl_matrix_1 = require("gl-matrix");
+var Vertex = /** @class */function () {
+  function Vertex(index, position) {
+    this.textureIndex = Vertex.NO_INDEX;
+    this.normalIndex = Vertex.NO_INDEX;
+    this.index = index;
+    this.position = position;
+    this.length = gl_matrix_1.vec3.length(position);
+  }
+  Vertex.prototype.isSet = function () {
+    return this.textureIndex != Vertex.NO_INDEX && this.normalIndex != Vertex.NO_INDEX;
+  };
+  Vertex.prototype.hasSameTextureAndNormal = function (textureIndexOther, normalIndexOther) {
+    return textureIndexOther == this.textureIndex && normalIndexOther == this.normalIndex;
+  };
+  Vertex.NO_INDEX = -1;
+  return Vertex;
+}();
+exports.Vertex = Vertex;
+},{"gl-matrix":"../node_modules/gl-matrix/esm/index.js"}],"OBJLoader/ModelData.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var ModelData = /** @class */function () {
+  function ModelData(vertices, textureCoords, normals, indices, furthestPoint) {
+    this.vertices = vertices;
+    this.furthestPoint = furthestPoint;
+    this.indices = indices;
+    this.textureCoords = textureCoords;
+    this.normals = normals;
+  }
+  return ModelData;
+}();
+exports.ModelData = ModelData;
+},{}],"OBJLoader/OBJFileLoader.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var gl_matrix_1 = require("gl-matrix");
+var Utilities_1 = require("../Utilities");
+var Vertex_1 = require("./Vertex");
+var ModelData_1 = require("./ModelData");
+var OBJFileLoader = /** @class */function () {
+  function OBJFileLoader() {}
+  OBJFileLoader.loadOBJ = function (fileName) {
+    var _this = this;
+    var fileData = Utilities_1.loadFile(fileName);
+    var lines = fileData.split("\n");
+    var vertices = [];
+    var textures = [];
+    var normals = [];
+    var indices = [];
+    lines.forEach(function (line) {
+      if (line.startsWith("v ")) {
+        var currentLine = line.split(" ");
+        var vertex = gl_matrix_1.vec3.set(gl_matrix_1.vec3.create(), Number(currentLine[1]), Number(currentLine[2]), Number(currentLine[3]));
+        var newVertex = new Vertex_1.Vertex(vertices.length, vertex);
+        vertices.push(newVertex);
+      } else if (line.startsWith("vt ")) {
+        var currentLine = line.split(" ");
+        var texture = gl_matrix_1.vec2.set(gl_matrix_1.vec2.create(), Number(currentLine[1]), Number(currentLine[2]));
+        textures.push(texture);
+      } else if (line.startsWith("vn ")) {
+        var currentLine = line.split(" ");
+        var normal = gl_matrix_1.vec3.set(gl_matrix_1.vec3.create(), Number(currentLine[1]), Number(currentLine[2]), Number(currentLine[3]));
+        normals.push(normal);
+      }
+    });
+    lines.forEach(function (line) {
+      if (line.startsWith("f ")) {
+        var currentLine = line.split(" ");
+        var vertex1 = currentLine[1].split("/");
+        var vertex2 = currentLine[2].split("/");
+        var vertex3 = currentLine[3].split("/");
+        _this.processVertex(vertex1, vertices, indices);
+        _this.processVertex(vertex2, vertices, indices);
+        _this.processVertex(vertex3, vertices, indices);
+        if (currentLine.length > 4) {
+          var vertex4 = currentLine[4].split("/");
+          _this.processVertex(vertex1, vertices, indices);
+          _this.processVertex(vertex3, vertices, indices);
+          _this.processVertex(vertex4, vertices, indices);
+        }
+      }
+    });
+    this.removeUnusedVertices(vertices);
+    var verticesArray = Array(vertices.length * 3).fill(0);
+    var texturesArray = Array(vertices.length * 2).fill(0);
+    var normalsArray = Array(vertices.length * 3).fill(0);
+    var furthest = this.convertDataToArrays(vertices, textures, normals, verticesArray, texturesArray, normalsArray);
+    return new ModelData_1.ModelData(verticesArray, texturesArray, normalsArray, indices, furthest);
+  };
+  OBJFileLoader.processVertex = function (vertex, vertices, indices) {
+    var index = Number(vertex[0]) - 1;
+    var currentVertex = vertices[index];
+    var textureIndex = Number(vertex[1]) - 1;
+    var normalIndex = Number(vertex[2]) - 1;
+    if (!currentVertex.isSet()) {
+      currentVertex.textureIndex = textureIndex;
+      currentVertex.normalIndex = normalIndex;
+      indices.push(index);
+    } else {
+      this.dealWithAlreadyProcessedVertex(currentVertex, textureIndex, normalIndex, indices, vertices);
+    }
+  };
+  OBJFileLoader.convertDataToArrays = function (vertices, textures, normals, verticesArray, texturesArray, normalsArray) {
+    var furthestPoint = 0;
+    for (var i = 0; i < vertices.length; i++) {
+      var currentVertex = vertices[i];
+      if (currentVertex.length > furthestPoint) {
+        furthestPoint = currentVertex.length;
+      }
+      var position = currentVertex.position;
+      var textureCoord = textures[currentVertex.textureIndex];
+      var normalVector = normals[currentVertex.normalIndex];
+      verticesArray[i * 3] = position[0];
+      verticesArray[i * 3 + 1] = position[1];
+      verticesArray[i * 3 + 2] = position[2];
+      texturesArray[i * 2] = textureCoord[0];
+      texturesArray[i * 2 + 1] = 1 - textureCoord[1];
+      normalsArray[i * 3] = normalVector[0];
+      normalsArray[i * 3 + 1] = normalVector[1];
+      normalsArray[i * 3 + 2] = normalVector[2];
+    }
+    return furthestPoint;
+  };
+  OBJFileLoader.dealWithAlreadyProcessedVertex = function (previousVertex, newTextureIndex, newNormalIndex, indices, vertices) {
+    if (previousVertex.hasSameTextureAndNormal(newTextureIndex, newNormalIndex)) {
+      indices.push(previousVertex.index);
+    } else {
+      var anotherVertex = previousVertex.duplicateVertex;
+      if (anotherVertex) {
+        this.dealWithAlreadyProcessedVertex(anotherVertex, newTextureIndex, newNormalIndex, indices, vertices);
+      } else {
+        var duplicateVertex = new Vertex_1.Vertex(vertices.length, previousVertex.position);
+        duplicateVertex.textureIndex = newTextureIndex;
+        duplicateVertex.normalIndex = newNormalIndex;
+        previousVertex.duplicateVertex = duplicateVertex;
+        vertices.push(duplicateVertex);
+        indices.push(duplicateVertex.index);
+      }
+    }
+  };
+  OBJFileLoader.removeUnusedVertices = function (vertices) {
+    vertices.forEach(function (vertex) {
+      if (!vertex.isSet()) {
+        vertex.textureIndex = 0;
+        vertex.normalIndex = 0;
+      }
+    });
+  };
+  return OBJFileLoader;
+}();
+exports.OBJFileLoader = OBJFileLoader;
+},{"gl-matrix":"../node_modules/gl-matrix/esm/index.js","../Utilities":"Utilities.ts","./Vertex":"OBJLoader/Vertex.ts","./ModelData":"OBJLoader/ModelData.ts"}],"index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -8299,9 +8099,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 var ShaderProgram_1 = require("./ShaderProgram");
 var BufferObject_1 = require("./BufferObject");
-var Obj_1 = require("./OBJLoader/Obj");
 var gl_matrix_1 = require("gl-matrix");
 var Texture_1 = require("./Texture");
+var OBJFileLoader_1 = require("./OBJLoader/OBJFileLoader");
 (function () {
   var canvas = document.createElement("canvas");
   canvas.width = window.innerWidth;
@@ -8309,37 +8109,34 @@ var Texture_1 = require("./Texture");
   exports.gl = canvas.getContext("webgl2");
   document.body.appendChild(canvas);
   var program = new ShaderProgram_1.ShaderProgram("resources/shaders/simple.vs", "resources/shaders/simple.fs");
-  var fishObj = new Obj_1.Obj();
-  fishObj.loadObjFile("resources/models/fish.obj");
+  var fishObj = OBJFileLoader_1.OBJFileLoader.loadOBJ("resources/models/dragon.obj");
   var vertexData = fishObj.vertices;
-  var uvs = fishObj.uvs;
+  var uvs = fishObj.textureCoords;
   var indices = fishObj.indices;
   var normals = fishObj.normals;
-  var texture = new Texture_1.Texture("resources/images/fish_texture.png");
+  var texture = new Texture_1.Texture("resources/images/dragon.png");
   var vertexBuffer = new BufferObject_1.BufferObject(exports.gl.ARRAY_BUFFER).setData(new Float32Array(vertexData), exports.gl.STATIC_DRAW);
   var uvsBuffer = new BufferObject_1.BufferObject(exports.gl.ARRAY_BUFFER).setData(new Float32Array(uvs), exports.gl.STATIC_DRAW);
-  var indicesBuffer = new BufferObject_1.BufferObject(exports.gl.ELEMENT_ARRAY_BUFFER).setData(new Int32Array(indices), exports.gl.STATIC_DRAW);
   var normalsBuffer = new BufferObject_1.BufferObject(exports.gl.ARRAY_BUFFER).setData(new Float32Array(normals), exports.gl.STATIC_DRAW);
+  var indicesBuffer = new BufferObject_1.BufferObject(exports.gl.ELEMENT_ARRAY_BUFFER).setData(new Int32Array(indices), exports.gl.STATIC_DRAW);
   var delta = 60 / 1000;
   var projectionMatrix = gl_matrix_1.mat4.create();
   gl_matrix_1.mat4.perspective(projectionMatrix, 60 * (Math.PI / 180), canvas.clientWidth / canvas.clientHeight, 0.1, 100);
   program.setMatrix4fv("projectionMatrix", projectionMatrix);
-  var position = [0, 0, -10];
+  var position = [0, -4, -15];
   var startPosition = position;
   var rotation = [0, 0, 0];
   var startTime = Date.now();
   setInterval(function () {
     var timeSinceStart = (Date.now() - startTime) / 1000;
     position = startPosition;
-    position[1] += Math.sin(timeSinceStart) * (Math.PI / 180) * 1.2;
-    rotation[1] += 45 * delta;
+    rotation[1] += 20 * delta;
     var modelMatrix = gl_matrix_1.mat4.create();
     gl_matrix_1.mat4.translate(modelMatrix, modelMatrix, new Float32Array(position));
     gl_matrix_1.mat4.rotateX(modelMatrix, modelMatrix, rotation[0] * (Math.PI / 180));
     gl_matrix_1.mat4.rotateY(modelMatrix, modelMatrix, rotation[1] * (Math.PI / 180));
     gl_matrix_1.mat4.rotateZ(modelMatrix, modelMatrix, rotation[2] * (Math.PI / 180));
     program.setMatrix4fv("modelMatrix", modelMatrix);
-    program.setFloat("time", timeSinceStart);
     exports.gl.enable(exports.gl.DEPTH_TEST);
     exports.gl.clearColor(0, 0, 0, 1);
     exports.gl.clear(exports.gl.DEPTH_BUFFER_BIT | exports.gl.COLOR_BUFFER_BIT);
@@ -8366,7 +8163,7 @@ var Texture_1 = require("./Texture");
     texture.delete();
   });
 })();
-},{"./ShaderProgram":"ShaderProgram.ts","./BufferObject":"BufferObject.ts","./OBJLoader/Obj":"OBJLoader/Obj.ts","gl-matrix":"../node_modules/gl-matrix/esm/index.js","./Texture":"Texture.ts"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./ShaderProgram":"ShaderProgram.ts","./BufferObject":"BufferObject.ts","gl-matrix":"../node_modules/gl-matrix/esm/index.js","./Texture":"Texture.ts","./OBJLoader/OBJFileLoader":"OBJLoader/OBJFileLoader.ts"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -8391,7 +8188,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57187" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59131" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];
