@@ -197,56 +197,7 @@ var ShaderProgram = /** @class */function () {
   return ShaderProgram;
 }();
 exports.ShaderProgram = ShaderProgram;
-},{".":"index.ts","./Utilities":"Utilities.ts"}],"BufferObject.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-var _1 = require(".");
-var BufferObject = /** @class */function () {
-  function BufferObject(bufferType) {
-    this.bufferType = bufferType;
-    this.recreate();
-  }
-  Object.defineProperty(BufferObject.prototype, "buffer", {
-    get: function get() {
-      return this._buffer;
-    },
-    enumerable: true,
-    configurable: true
-  });
-  BufferObject.prototype.setData = function (data, usage) {
-    if (!this._buffer) return this;
-    this.bind();
-    _1.gl.bufferData(this.bufferType, data, usage);
-    this.unbind();
-    return this;
-  };
-  BufferObject.prototype.bind = function () {
-    if (!this._buffer) return this;
-    _1.gl.bindBuffer(this.bufferType, this._buffer);
-    return this;
-  };
-  BufferObject.prototype.unbind = function () {
-    if (!this._buffer) return this;
-    _1.gl.bindBuffer(this.bufferType, null);
-    return this;
-  };
-  BufferObject.prototype.recreate = function () {
-    if (this._buffer) return this;
-    this._buffer = _1.gl.createBuffer();
-    return this;
-  };
-  BufferObject.prototype.delete = function () {
-    if (!this._buffer) return;
-    _1.gl.deleteBuffer(this._buffer);
-    this._buffer = null;
-  };
-  return BufferObject;
-}();
-exports.BufferObject = BufferObject;
-},{".":"index.ts"}],"../node_modules/gl-matrix/esm/common.js":[function(require,module,exports) {
+},{".":"index.ts","./Utilities":"Utilities.ts"}],"../node_modules/gl-matrix/esm/common.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -7927,7 +7878,56 @@ var Texture = /** @class */function () {
   return Texture;
 }();
 exports.Texture = Texture;
-},{".":"index.ts","./MathUtilities":"MathUtilities.ts"}],"OBJLoader/Vertex.ts":[function(require,module,exports) {
+},{".":"index.ts","./MathUtilities":"MathUtilities.ts"}],"BufferObject.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var _1 = require(".");
+var BufferObject = /** @class */function () {
+  function BufferObject(bufferType) {
+    this.bufferType = bufferType;
+    this.recreate();
+  }
+  Object.defineProperty(BufferObject.prototype, "buffer", {
+    get: function get() {
+      return this._buffer;
+    },
+    enumerable: true,
+    configurable: true
+  });
+  BufferObject.prototype.setData = function (data, usage) {
+    if (!this._buffer) return this;
+    this.bind();
+    _1.gl.bufferData(this.bufferType, data, usage);
+    this.unbind();
+    return this;
+  };
+  BufferObject.prototype.bind = function () {
+    if (!this._buffer) return this;
+    _1.gl.bindBuffer(this.bufferType, this._buffer);
+    return this;
+  };
+  BufferObject.prototype.unbind = function () {
+    if (!this._buffer) return this;
+    _1.gl.bindBuffer(this.bufferType, null);
+    return this;
+  };
+  BufferObject.prototype.recreate = function () {
+    if (this._buffer) return this;
+    this._buffer = _1.gl.createBuffer();
+    return this;
+  };
+  BufferObject.prototype.delete = function () {
+    if (!this._buffer) return;
+    _1.gl.deleteBuffer(this._buffer);
+    this._buffer = null;
+  };
+  return BufferObject;
+}();
+exports.BufferObject = BufferObject;
+},{".":"index.ts"}],"OBJLoader/Vertex.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -8091,17 +8091,91 @@ var OBJFileLoader = /** @class */function () {
   return OBJFileLoader;
 }();
 exports.OBJFileLoader = OBJFileLoader;
-},{"gl-matrix":"../node_modules/gl-matrix/esm/index.js","../Utilities":"Utilities.ts","./Vertex":"OBJLoader/Vertex.ts","./ModelData":"OBJLoader/ModelData.ts"}],"index.ts":[function(require,module,exports) {
+},{"gl-matrix":"../node_modules/gl-matrix/esm/index.js","../Utilities":"Utilities.ts","./Vertex":"OBJLoader/Vertex.ts","./ModelData":"OBJLoader/ModelData.ts"}],"RawModel.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var _1 = require(".");
+var BufferObject_1 = require("./BufferObject");
+var OBJFileLoader_1 = require("./OBJLoader/OBJFileLoader");
+var RawModel = /** @class */function () {
+  function RawModel(objFile) {
+    this.modelData = OBJFileLoader_1.OBJFileLoader.loadOBJ(objFile);
+    this.vertexBuffer = new BufferObject_1.BufferObject(_1.gl.ARRAY_BUFFER).setData(new Float32Array(this.modelData.vertices), _1.gl.STATIC_DRAW);
+    this.indicesBuffer = new BufferObject_1.BufferObject(_1.gl.ELEMENT_ARRAY_BUFFER).setData(new Int32Array(this.modelData.indices), _1.gl.STATIC_DRAW);
+    this.textureCoordsBuffer = new BufferObject_1.BufferObject(_1.gl.ARRAY_BUFFER).setData(new Float32Array(this.modelData.textureCoords), _1.gl.STATIC_DRAW);
+    this.normalsBuffer = new BufferObject_1.BufferObject(_1.gl.ARRAY_BUFFER).setData(new Float32Array(this.modelData.normals), _1.gl.STATIC_DRAW);
+  }
+  RawModel.prototype.enableVertexAttribs = function () {
+    this.vertexBuffer.bind();
+    _1.gl.vertexAttribPointer(0, 3, _1.gl.FLOAT, false, 0, 0);
+    _1.gl.enableVertexAttribArray(0);
+    this.textureCoordsBuffer.bind();
+    _1.gl.vertexAttribPointer(1, 2, _1.gl.FLOAT, false, 0, 0);
+    _1.gl.enableVertexAttribArray(1);
+    this.normalsBuffer.bind();
+    _1.gl.vertexAttribPointer(2, 3, _1.gl.FLOAT, false, 0, 0);
+    _1.gl.enableVertexAttribArray(2);
+  };
+  RawModel.prototype.drawElements = function () {
+    this.indicesBuffer.bind();
+    _1.gl.drawElements(_1.gl.TRIANGLES, this.modelData.indices.length, _1.gl.UNSIGNED_INT, 0);
+  };
+  RawModel.prototype.delete = function () {
+    this.vertexBuffer.delete();
+    this.indicesBuffer.delete();
+    this.textureCoordsBuffer.delete();
+    this.normalsBuffer.delete();
+  };
+  return RawModel;
+}();
+exports.RawModel = RawModel;
+},{".":"index.ts","./BufferObject":"BufferObject.ts","./OBJLoader/OBJFileLoader":"OBJLoader/OBJFileLoader.ts"}],"TexturedModel.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var TexturedModel = /** @class */function () {
+  function TexturedModel(rawModel, texture) {
+    this.rawModel = rawModel;
+    this.texture = texture;
+  }
+  TexturedModel.prototype.drawModel = function () {
+    this.texture.activate();
+    this.rawModel.drawElements();
+  };
+  return TexturedModel;
+}();
+exports.TexturedModel = TexturedModel;
+},{}],"index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 var ShaderProgram_1 = require("./ShaderProgram");
-var BufferObject_1 = require("./BufferObject");
 var gl_matrix_1 = require("gl-matrix");
 var Texture_1 = require("./Texture");
-var OBJFileLoader_1 = require("./OBJLoader/OBJFileLoader");
+var RawModel_1 = require("./RawModel");
+var TexturedModel_1 = require("./TexturedModel");
+var EntityData = /** @class */function () {
+  function EntityData() {
+    this.position = [0, 0, 0];
+    this.rotation = [0, 0, 0];
+  }
+  EntityData.prototype.createMatrix = function () {
+    var matrix = gl_matrix_1.mat4.create();
+    gl_matrix_1.mat4.translate(matrix, matrix, this.position);
+    gl_matrix_1.mat4.rotateX(matrix, matrix, this.rotation[0] * (Math.PI / 180));
+    gl_matrix_1.mat4.rotateY(matrix, matrix, this.rotation[1] * (Math.PI / 180));
+    gl_matrix_1.mat4.rotateZ(matrix, matrix, this.rotation[2] * (Math.PI / 180));
+    return matrix;
+  };
+  return EntityData;
+}();
 (function () {
   var canvas = document.createElement("canvas");
   canvas.width = window.innerWidth;
@@ -8109,61 +8183,41 @@ var OBJFileLoader_1 = require("./OBJLoader/OBJFileLoader");
   exports.gl = canvas.getContext("webgl2");
   document.body.appendChild(canvas);
   var program = new ShaderProgram_1.ShaderProgram("resources/shaders/simple.vs", "resources/shaders/simple.fs");
-  var fishObj = OBJFileLoader_1.OBJFileLoader.loadOBJ("resources/models/dragon.obj");
-  var vertexData = fishObj.vertices;
-  var uvs = fishObj.textureCoords;
-  var indices = fishObj.indices;
-  var normals = fishObj.normals;
   var texture = new Texture_1.Texture("resources/images/dragon.png");
-  var vertexBuffer = new BufferObject_1.BufferObject(exports.gl.ARRAY_BUFFER).setData(new Float32Array(vertexData), exports.gl.STATIC_DRAW);
-  var uvsBuffer = new BufferObject_1.BufferObject(exports.gl.ARRAY_BUFFER).setData(new Float32Array(uvs), exports.gl.STATIC_DRAW);
-  var normalsBuffer = new BufferObject_1.BufferObject(exports.gl.ARRAY_BUFFER).setData(new Float32Array(normals), exports.gl.STATIC_DRAW);
-  var indicesBuffer = new BufferObject_1.BufferObject(exports.gl.ELEMENT_ARRAY_BUFFER).setData(new Int32Array(indices), exports.gl.STATIC_DRAW);
+  var dragonModel = new TexturedModel_1.TexturedModel(new RawModel_1.RawModel("resources/models/dragon.obj"), texture);
   var delta = 60 / 1000;
   var projectionMatrix = gl_matrix_1.mat4.create();
   gl_matrix_1.mat4.perspective(projectionMatrix, 60 * (Math.PI / 180), canvas.clientWidth / canvas.clientHeight, 0.1, 100);
   program.setMatrix4fv("projectionMatrix", projectionMatrix);
-  var position = [0, -4, -15];
-  var startPosition = position;
-  var rotation = [0, 0, 0];
   var startTime = Date.now();
+  var positions = [];
+  var d = Math.random() * 5;
+  for (var i = 0; i < d; i++) {
+    var entityData = new EntityData();
+    entityData.position = [(Math.random() * 2 - 1) * 8, (Math.random() * 2 - 1) * 8, 0];
+    entityData.rotation = [Math.random() * 360, Math.random() * 360, Math.random() * 360];
+    entityData.position[2] -= 50;
+    positions.push(entityData);
+  }
   setInterval(function () {
     var timeSinceStart = (Date.now() - startTime) / 1000;
-    position = startPosition;
-    rotation[1] += 20 * delta;
-    var modelMatrix = gl_matrix_1.mat4.create();
-    gl_matrix_1.mat4.translate(modelMatrix, modelMatrix, new Float32Array(position));
-    gl_matrix_1.mat4.rotateX(modelMatrix, modelMatrix, rotation[0] * (Math.PI / 180));
-    gl_matrix_1.mat4.rotateY(modelMatrix, modelMatrix, rotation[1] * (Math.PI / 180));
-    gl_matrix_1.mat4.rotateZ(modelMatrix, modelMatrix, rotation[2] * (Math.PI / 180));
-    program.setMatrix4fv("modelMatrix", modelMatrix);
     exports.gl.enable(exports.gl.DEPTH_TEST);
     exports.gl.clearColor(0, 0, 0, 1);
     exports.gl.clear(exports.gl.DEPTH_BUFFER_BIT | exports.gl.COLOR_BUFFER_BIT);
-    program.use();
-    vertexBuffer.bind();
-    exports.gl.vertexAttribPointer(0, 3, exports.gl.FLOAT, false, 0, 0);
-    exports.gl.enableVertexAttribArray(0);
-    uvsBuffer.bind();
-    exports.gl.vertexAttribPointer(1, 2, exports.gl.FLOAT, false, 0, 0);
-    exports.gl.enableVertexAttribArray(1);
-    normalsBuffer.bind();
-    exports.gl.vertexAttribPointer(2, 3, exports.gl.FLOAT, false, 0, 0);
-    exports.gl.enableVertexAttribArray(2);
-    texture.activate();
-    indicesBuffer.bind();
-    exports.gl.drawElements(exports.gl.TRIANGLES, indices.length, exports.gl.UNSIGNED_INT, 0);
+    positions.forEach(function (data) {
+      program.setMatrix4fv("modelMatrix", data.createMatrix());
+      dragonModel.rawModel.enableVertexAttribs();
+      program.use();
+      dragonModel.drawModel();
+    });
   }, 1000 / 60);
   addEventListener("close", function () {
     program.delete();
-    vertexBuffer.delete();
-    indicesBuffer.delete();
-    uvsBuffer.delete();
-    normalsBuffer.delete();
     texture.delete();
+    dragonModel.rawModel.delete();
   });
 })();
-},{"./ShaderProgram":"ShaderProgram.ts","./BufferObject":"BufferObject.ts","gl-matrix":"../node_modules/gl-matrix/esm/index.js","./Texture":"Texture.ts","./OBJLoader/OBJFileLoader":"OBJLoader/OBJFileLoader.ts"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./ShaderProgram":"ShaderProgram.ts","gl-matrix":"../node_modules/gl-matrix/esm/index.js","./Texture":"Texture.ts","./RawModel":"RawModel.ts","./TexturedModel":"TexturedModel.ts"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -8188,7 +8242,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59131" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61943" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];
