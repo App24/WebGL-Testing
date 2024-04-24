@@ -4,7 +4,7 @@ import { isPowerOf2 } from "./MathUtilities";
 export class Texture {
     public readonly texture: WebGLTexture;
 
-    public constructor(imageUrl: string, flipTexture = true) {
+    public constructor(imageUrl: string, flipTexture = false) {
         this.texture = gl.createTexture();
         this.bind();
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 255, 255]));

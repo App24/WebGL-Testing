@@ -1,58 +1,68 @@
 import { ShaderProgram } from "./ShaderProgram";
 import { BufferObject } from "./BufferObject";
-import { Obj } from "./OBJLoader/Obj";
 import { mat4 } from "gl-matrix";
 import { Texture } from "./Texture";
+import { OBJFileLoader } from "./OBJLoader/OBJFileLoader";
 
 export let gl: WebGL2RenderingContext;
 
 (() => {
     const canvas = document.createElement("canvas");
-    canvas.width = 1200;
-    canvas.height = 600;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
     gl = canvas.getContext("webgl2");
 
     document.body.appendChild(canvas);
 
     const program = new ShaderProgram("resources/shaders/simple.vs", "resources/shaders/simple.fs");
 
-    const fishObj = new Obj();
-    fishObj.loadObjFile("resources/fish.obj");
+    const fishObj = OBJFileLoader.loadOBJ("resources/models/dragon.obj");
 
     const vertexData = fishObj.vertices;
 
-    const uvs = fishObj.uvs;
-    
+    const uvs = fishObj.textureCoords;
+
     const indices = fishObj.indices;
 
     const normals = fishObj.normals;
 
-    const texture = new Texture("resources/images/fish_texture.png");
+    const texture = new Texture("resources/images/dragon.png");
 
     const vertexBuffer = new BufferObject(gl.ARRAY_BUFFER).setData(new Float32Array(vertexData), gl.STATIC_DRAW);
     const uvsBuffer = new BufferObject(gl.ARRAY_BUFFER).setData(new Float32Array(uvs), gl.STATIC_DRAW);
-    const indicesBuffer = new BufferObject(gl.ELEMENT_ARRAY_BUFFER).setData(new Int32Array(indices), gl.STATIC_DRAW);
     const normalsBuffer = new BufferObject(gl.ARRAY_BUFFER).setData(new Float32Array(normals), gl.STATIC_DRAW);
+    const indicesBuffer = new BufferObject(gl.ELEMENT_ARRAY_BUFFER).setData(new Int32Array(indices), gl.STATIC_DRAW);
 
     const delta = 60 / 1000;
 
-    const modelMatrix = mat4.create();
-    mat4.translate(modelMatrix, modelMatrix, [0, 0, -4]);
-
-    const projectionMatrix = mat4.create();
+    let projectionMatrix = mat4.create();
     mat4.perspective(projectionMatrix, 60 * (Math.PI / 180), canvas.clientWidth / canvas.clientHeight, 0.1, 100);
-
     program.setMatrix4fv("projectionMatrix", projectionMatrix);
-    program.setMatrix4fv("modelMatrix", modelMatrix);
+
+    let position = [0, -4, -15];
+
+    const startPosition = position;
+
+    let rotation = [0, 0, 0];
 
     const startTime = Date.now();
 
     setInterval(() => {
 
-        mat4.rotate(modelMatrix, modelMatrix, (Math.PI / 32) * delta, [0, 1, 0]);
-        program.setMatrix4fv("modelMatrix", modelMatrix);
+        const timeSinceStart = (Date.now() - startTime) / 1000;
 
-        program.setFloat("time", (Date.now() - startTime)/1000);
+        position = startPosition;
+
+        rotation[1] += 20 * delta;
+
+        const modelMatrix = mat4.create();
+        mat4.translate(modelMatrix, modelMatrix, new Float32Array(position));
+
+        mat4.rotateX(modelMatrix, modelMatrix, rotation[0] * (Math.PI / 180));
+        mat4.rotateY(modelMatrix, modelMatrix, rotation[1] * (Math.PI / 180));
+        mat4.rotateZ(modelMatrix, modelMatrix, rotation[2] * (Math.PI / 180));
+
+        program.setMatrix4fv("modelMatrix", modelMatrix);
 
         gl.enable(gl.DEPTH_TEST);
         gl.clearColor(0, 0, 0, 1);

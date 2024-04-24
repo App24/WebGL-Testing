@@ -1,46 +1,26 @@
-import { IType } from "./IType";
+import { vec3 } from "gl-matrix";
 
-const MinimumDataLength = 4;
-const Prefix = "v";
+export class Vertex {
+    public static NO_INDEX = -1;
 
-export class Vertex implements IType {
-    public x: number;
-    public y: number;
-    public z: number;
+    public position: vec3;
+    public textureIndex = Vertex.NO_INDEX;
+    public normalIndex = Vertex.NO_INDEX;
+    public duplicateVertex:Vertex;
+    public index:number;
+    public length:number;
 
-    public Index: number;
-
-    loadFromStringArray(data: string[]): void {
-        if (data.length < MinimumDataLength)
-            throw new Error("Input array must be of minimum length " + MinimumDataLength);
-
-        if (data[0].toLowerCase() !== Prefix)
-            throw new Error("Data prefix must be '" + Prefix + "'");
-
-        let success = false;
-
-        let x = 0;
-        let y = 0;
-        let z = 0;
-
-        x = Number(data[1]);
-        success = !isNaN(x)
-        if (!success)
-            throw new Error("Could not parse X parameter as double");
-
-        y = Number(data[2]);
-        success = !isNaN(y)
-        if (!success)
-            throw new Error("Could not parse Y parameter as double");
-        
-        z = Number(data[3]);
-        success = !isNaN(z)
-        if (!success)
-            throw new Error("Could not parse Z parameter as double");
-
-        this.x = x;
-        this.y = y;
-        this.z = z;
+    public constructor(index:number, position:vec3){
+        this.index = index;
+        this.position =position;
+        this.length = vec3.length(position);
     }
 
+    public isSet() {
+        return this.textureIndex != Vertex.NO_INDEX && this.normalIndex != Vertex.NO_INDEX;
+    }
+
+    public hasSameTextureAndNormal(textureIndexOther:number, normalIndexOther:number){
+        return textureIndexOther == this.textureIndex && normalIndexOther == this.normalIndex;
+    }
 }
