@@ -1,10 +1,31 @@
 import { ShaderProgram } from "./ShaderProgram";
-import { BufferObject } from "./BufferObject";
-import { mat4 } from "gl-matrix";
+import { mat4, vec3 } from "gl-matrix";
 import { Texture } from "./Texture";
-import { OBJFileLoader } from "./OBJLoader/OBJFileLoader";
+import { RawModel } from "./RawModel";
+import { TexturedModel } from "./TexturedModel";
 
 export let gl: WebGL2RenderingContext;
+
+class EntityData {
+    public position: vec3;
+    public rotation: vec3;
+
+    public constructor() {
+        this.position = [0, 0, 0];
+        this.rotation = [0, 0, 0];
+    }
+
+    public createMatrix() {
+        const matrix = mat4.create();
+        mat4.translate(matrix, matrix, this.position);
+
+        mat4.rotateX(matrix, matrix, this.rotation[0] * (Math.PI / 180));
+        mat4.rotateY(matrix, matrix, this.rotation[1] * (Math.PI / 180));
+        mat4.rotateZ(matrix, matrix, this.rotation[2] * (Math.PI / 180));
+
+        return matrix;
+    }
+}
 
 (() => {
     const canvas = document.createElement("canvas");
@@ -16,22 +37,9 @@ export let gl: WebGL2RenderingContext;
 
     const program = new ShaderProgram("resources/shaders/simple.vs", "resources/shaders/simple.fs");
 
-    const fishObj = OBJFileLoader.loadOBJ("resources/models/dragon.obj");
-
-    const vertexData = fishObj.vertices;
-
-    const uvs = fishObj.textureCoords;
-
-    const indices = fishObj.indices;
-
-    const normals = fishObj.normals;
-
     const texture = new Texture("resources/images/dragon.png");
 
-    const vertexBuffer = new BufferObject(gl.ARRAY_BUFFER).setData(new Float32Array(vertexData), gl.STATIC_DRAW);
-    const uvsBuffer = new BufferObject(gl.ARRAY_BUFFER).setData(new Float32Array(uvs), gl.STATIC_DRAW);
-    const normalsBuffer = new BufferObject(gl.ARRAY_BUFFER).setData(new Float32Array(normals), gl.STATIC_DRAW);
-    const indicesBuffer = new BufferObject(gl.ELEMENT_ARRAY_BUFFER).setData(new Int32Array(indices), gl.STATIC_DRAW);
+    const dragonModel = new TexturedModel(new RawModel("resources/models/dragon.obj"), texture);
 
     const delta = 60 / 1000;
 
@@ -39,65 +47,45 @@ export let gl: WebGL2RenderingContext;
     mat4.perspective(projectionMatrix, 60 * (Math.PI / 180), canvas.clientWidth / canvas.clientHeight, 0.1, 100);
     program.setMatrix4fv("projectionMatrix", projectionMatrix);
 
-    let position = [0, -4, -15];
-
-    const startPosition = position;
-
-    let rotation = [0, 0, 0];
-
     const startTime = Date.now();
+
+    const positions: EntityData[] = [];
+
+    const d = Math.random() * 5;
+
+    for (let i = 0; i < d; i++) {
+        const entityData = new EntityData();
+
+        entityData.position = [(Math.random() * 2 - 1) * 8, (Math.random() * 2 - 1) * 8, 0];
+
+        entityData.rotation = [Math.random()*360, Math.random()*360, Math.random()*360];
+
+        entityData.position[2] -= 50;
+
+        positions.push(entityData);
+    }
 
     setInterval(() => {
 
         const timeSinceStart = (Date.now() - startTime) / 1000;
 
-        position = startPosition;
-
-        rotation[1] += 20 * delta;
-
-        const modelMatrix = mat4.create();
-        mat4.translate(modelMatrix, modelMatrix, new Float32Array(position));
-
-        mat4.rotateX(modelMatrix, modelMatrix, rotation[0] * (Math.PI / 180));
-        mat4.rotateY(modelMatrix, modelMatrix, rotation[1] * (Math.PI / 180));
-        mat4.rotateZ(modelMatrix, modelMatrix, rotation[2] * (Math.PI / 180));
-
-        program.setMatrix4fv("modelMatrix", modelMatrix);
-
         gl.enable(gl.DEPTH_TEST);
         gl.clearColor(0, 0, 0, 1);
         gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
 
-        program.use();
+        positions.forEach(data => {
+            program.setMatrix4fv("modelMatrix", data.createMatrix());
 
-        vertexBuffer.bind();
-        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(0);
-
-        uvsBuffer.bind();
-        gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(1);
-
-        normalsBuffer.bind();
-        gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(2);
-
-        texture.activate();
-
-        indicesBuffer.bind();
-
-        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_INT, 0);
-
-
+            dragonModel.rawModel.enableVertexAttribs();
+            program.use();
+            dragonModel.drawModel();
+        });
 
     }, 1000 / 60);
 
     addEventListener("close", () => {
         program.delete();
-        vertexBuffer.delete();
-        indicesBuffer.delete();
-        uvsBuffer.delete();
-        normalsBuffer.delete();
         texture.delete();
+        dragonModel.rawModel.delete();
     });
 })();
