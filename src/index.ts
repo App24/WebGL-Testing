@@ -3,6 +3,7 @@ import { mat4, vec3 } from "gl-matrix";
 import { Texture } from "./Texture";
 import { RawModel } from "./RawModel";
 import { TexturedModel } from "./TexturedModel";
+import { Camera } from "./Camera";
 
 export let gl: WebGL2RenderingContext;
 
@@ -51,27 +52,22 @@ class EntityData {
 
     const positions: EntityData[] = [];
 
-    const d = Math.random() * 5;
+    const entityData = new EntityData();
 
-    for (let i = 0; i < d; i++) {
-        const entityData = new EntityData();
+    entityData.position = [0, 0, -20];
 
-        entityData.position = [(Math.random() * 2 - 1) * 8, (Math.random() * 2 - 1) * 8, 0];
+    positions.push(entityData);
 
-        entityData.rotation = [Math.random()*360, Math.random()*360, Math.random()*360];
-
-        entityData.position[2] -= 50;
-
-        positions.push(entityData);
-    }
+    const camera = new Camera();
 
     setInterval(() => {
 
         const timeSinceStart = (Date.now() - startTime) / 1000;
 
         gl.enable(gl.DEPTH_TEST);
-        gl.clearColor(0, 0, 0, 1);
+        gl.clearColor(0.2, 0.3, 0.3, 1);
         gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
+        program.setMatrix4fv("viewMatrix", camera.getViewMatrix());
 
         positions.forEach(data => {
             program.setMatrix4fv("modelMatrix", data.createMatrix());
