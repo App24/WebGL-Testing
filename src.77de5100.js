@@ -134,6 +134,10 @@ function loadFile(filePath) {
   return result;
 }
 exports.loadFile = loadFile;
+function toRadians(degrees) {
+  return degrees * (Math.PI / 180.0);
+}
+exports.toRadians = toRadians;
 },{}],"ShaderProgram.ts":[function(require,module,exports) {
 "use strict";
 
@@ -8150,7 +8154,36 @@ var TexturedModel = /** @class */function () {
   return TexturedModel;
 }();
 exports.TexturedModel = TexturedModel;
-},{}],"index.ts":[function(require,module,exports) {
+},{}],"Camera.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var gl_matrix_1 = require("gl-matrix");
+var Utilities_1 = require("./Utilities");
+var Camera = /** @class */function () {
+  function Camera() {
+    this.position = [0, 0, 0];
+    this.yaw = -90;
+    this.pitch = 0;
+  }
+  Camera.prototype.getViewMatrix = function () {
+    var matrix = gl_matrix_1.mat4.create();
+    var direction = gl_matrix_1.vec3.create();
+    direction[0] = Math.cos(Utilities_1.toRadians(this.yaw)) * Math.cos(Utilities_1.toRadians(this.pitch));
+    direction[1] = Math.sin(Utilities_1.toRadians(this.pitch));
+    direction[2] = Math.sin(Utilities_1.toRadians(this.yaw)) * Math.cos(Utilities_1.toRadians(this.pitch));
+    var temp = gl_matrix_1.vec3.create();
+    direction = gl_matrix_1.vec3.normalize(direction, direction);
+    temp = gl_matrix_1.vec3.add(temp, this.position, direction);
+    matrix = gl_matrix_1.mat4.lookAt(matrix, this.position, temp, [0, 1, 0]);
+    return matrix;
+  };
+  return Camera;
+}();
+exports.Camera = Camera;
+},{"gl-matrix":"../node_modules/gl-matrix/esm/index.js","./Utilities":"Utilities.ts"}],"index.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -8161,6 +8194,7 @@ var gl_matrix_1 = require("gl-matrix");
 var Texture_1 = require("./Texture");
 var RawModel_1 = require("./RawModel");
 var TexturedModel_1 = require("./TexturedModel");
+var Camera_1 = require("./Camera");
 var EntityData = /** @class */function () {
   function EntityData() {
     this.position = [0, 0, 0];
@@ -8191,19 +8225,16 @@ var EntityData = /** @class */function () {
   program.setMatrix4fv("projectionMatrix", projectionMatrix);
   var startTime = Date.now();
   var positions = [];
-  var d = Math.random() * 5;
-  for (var i = 0; i < d; i++) {
-    var entityData = new EntityData();
-    entityData.position = [(Math.random() * 2 - 1) * 8, (Math.random() * 2 - 1) * 8, 0];
-    entityData.rotation = [Math.random() * 360, Math.random() * 360, Math.random() * 360];
-    entityData.position[2] -= 50;
-    positions.push(entityData);
-  }
+  var entityData = new EntityData();
+  entityData.position = [0, 0, -20];
+  positions.push(entityData);
+  var camera = new Camera_1.Camera();
   setInterval(function () {
     var timeSinceStart = (Date.now() - startTime) / 1000;
     exports.gl.enable(exports.gl.DEPTH_TEST);
-    exports.gl.clearColor(0, 0, 0, 1);
+    exports.gl.clearColor(0.2, 0.3, 0.3, 1);
     exports.gl.clear(exports.gl.DEPTH_BUFFER_BIT | exports.gl.COLOR_BUFFER_BIT);
+    program.setMatrix4fv("viewMatrix", camera.getViewMatrix());
     positions.forEach(function (data) {
       program.setMatrix4fv("modelMatrix", data.createMatrix());
       dragonModel.rawModel.enableVertexAttribs();
@@ -8217,7 +8248,7 @@ var EntityData = /** @class */function () {
     dragonModel.rawModel.delete();
   });
 })();
-},{"./ShaderProgram":"ShaderProgram.ts","gl-matrix":"../node_modules/gl-matrix/esm/index.js","./Texture":"Texture.ts","./RawModel":"RawModel.ts","./TexturedModel":"TexturedModel.ts"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./ShaderProgram":"ShaderProgram.ts","gl-matrix":"../node_modules/gl-matrix/esm/index.js","./Texture":"Texture.ts","./RawModel":"RawModel.ts","./TexturedModel":"TexturedModel.ts","./Camera":"Camera.ts"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -8242,7 +8273,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61943" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50971" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];
